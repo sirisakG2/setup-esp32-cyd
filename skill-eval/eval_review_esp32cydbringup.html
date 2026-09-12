@@ -1,0 +1,147 @@
+<!-- Topic: esp32-cyd-bringup skill — trigger description eval set editor (20 should-trigger/should-not queries used to tune the skill's SKILL.md description) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Set Review - esp32-cyd-bringup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Lora', Georgia, serif; background: #faf9f5; padding: 2rem; color: #141413; }
+    h1 { font-family: 'Poppins', sans-serif; margin-bottom: 0.5rem; font-size: 1.5rem; }
+    .description { color: #b0aea5; margin-bottom: 1.5rem; font-style: italic; max-width: 900px; }
+    .controls { margin-bottom: 1rem; display: flex; gap: 0.5rem; }
+    .btn { font-family: 'Poppins', sans-serif; padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500; }
+    .btn-add { background: #6a9bcc; color: white; }
+    .btn-add:hover { background: #5889b8; }
+    .btn-export { background: #d97757; color: white; }
+    .btn-export:hover { background: #c4613f; }
+    table { width: 100%; max-width: 1100px; border-collapse: collapse; background: white; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    th { font-family: 'Poppins', sans-serif; background: #141413; color: #faf9f5; padding: 0.75rem 1rem; text-align: left; font-size: 0.875rem; }
+    td { padding: 0.75rem 1rem; border-bottom: 1px solid #e8e6dc; vertical-align: top; }
+    tr:nth-child(even) td { background: #faf9f5; }
+    tr:hover td { background: #f3f1ea; }
+    .section-header td { background: #e8e6dc; font-family: 'Poppins', sans-serif; font-weight: 500; font-size: 0.8rem; color: #141413; text-transform: uppercase; letter-spacing: 0.05em; }
+    .query-input { width: 100%; padding: 0.4rem; border: 1px solid #e8e6dc; border-radius: 4px; font-size: 0.875rem; font-family: 'Lora', Georgia, serif; resize: vertical; min-height: 60px; }
+    .query-input:focus { outline: none; border-color: #d97757; box-shadow: 0 0 0 2px rgba(217,119,87,0.15); }
+    .toggle { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle .slider { position: absolute; inset: 0; background: #b0aea5; border-radius: 24px; cursor: pointer; transition: 0.2s; }
+    .toggle .slider::before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+    .toggle input:checked + .slider { background: #d97757; }
+    .toggle input:checked + .slider::before { transform: translateX(20px); }
+    .btn-delete { background: #c44; color: white; padding: 0.3rem 0.6rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-family: 'Poppins', sans-serif; }
+    .btn-delete:hover { background: #a33; }
+    .summary { margin-top: 1rem; color: #b0aea5; font-size: 0.875rem; }
+  </style>
+</head>
+<body>
+  <h1>Eval Set Review: <span id="skill-name">esp32-cyd-bringup</span></h1>
+  <p class="description">Current description: <span id="skill-desc">Bring up an ESP32-2432S028 \"Cheap Yellow Display\" (CYD) board from scratch — USB/serial detection troubleshooting on macOS, PlatformIO project scaffolding, ILI9341 display bring-up via LovyanGFX, and XPT2046 touch bring-up + per-unit calibration. Use this whenever the user mentions the ESP32-2432S028, \"Cheap Yellow Display\", \"CYD\", a CH340-based ESP32 board that won't show up as a serial port, LovyanGFX + XPT2046 touch problems (touch not responding, touch dot in the wrong place, coordinates inverted/swapped/mirrored/rotated), or wants a new PlatformIO project for this board — even if they only describe \"a yellow ESP32 board with a screen\" rather than naming the model.</span></p>
+
+  <div class="controls">
+    <button class="btn btn-add" onclick="addRow()">+ Add Query</button>
+    <button class="btn btn-export" onclick="exportEvalSet()">Export Eval Set</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:65%">Query</th>
+        <th style="width:18%">Should Trigger</th>
+        <th style="width:10%">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="eval-body"></tbody>
+  </table>
+
+  <p class="summary" id="summary"></p>
+
+  <script>
+    const EVAL_DATA = [{"query": "picked up an ESP32-2432S028 off aliexpress for $9, want to wire up a little status dashboard on it showing temp/humidity from a DHT22 -- where do i even start with the platformio setup for this thing", "should_trigger": true}, {"query": "my cheap yellow display board's touch is all messed up, i tap the top of the screen and the dot shows up on the left side instead, using lovyangfx", "should_trigger": true}, {"query": "trying to flash my CYD (2432s028r) over usb-c and arduino ide just shows no ports available, the board's blue led is on though", "should_trigger": true}, {"query": "got a batch of 5 of those yellow ESP32 boards with the built in screen for a class project, need to get them all bootstrapped with a basic PlatformIO template that has the display and touch working before I hand them out to students", "should_trigger": true}, {"query": "xpt2046 touch chip on my esp32 board isn't responding at all -- getTouch always returns false even though i can see the display rendering fine", "should_trigger": true}, {"query": "does anyone know why the touch coordinates on a resistive touchscreen would come out rotated 90 degrees from the actual display orientation? using an ili9341+xpt2046 combo board", "should_trigger": true}, {"query": "yo my esp32 board with the screen (the cheap one everyone uses for smart home displays) won't show up as a com port on windows -- wait no im on mac, ls /dev/cu.* shows nothing", "should_trigger": true}, {"query": "want to set up a new lovyangfx project for the CYD board from scratch, need the platformio.ini and the pin config for both display and touch", "should_trigger": true}, {"query": "quick question, does the ESP32-2432S028 support PSRAM or is that only the -R variant", "should_trigger": false}, {"query": "my regular esp32-wroom-32 devkit isn't showing up on /dev/cu.* on my mac, tried a different cable already, any other ideas", "should_trigger": false}, {"query": "working on a TFT_eSPI project for a generic ILI9341 breakout board wired to an arduino uno, touch isn't calibrated right, dot appears offset from where I tap", "should_trigger": false}, {"query": "I have an ESP32 project where a capacitive touch sensor (just a wire on GPIO4, touchRead()) isn't triggering reliably, any threshold tuning tips?", "should_trigger": false}, {"query": "building a raspberry pi kiosk with a 7 inch official touchscreen, touch input works but the coordinates are mirrored left-right after i rotated the display in config.txt", "should_trigger": false}, {"query": "need to set up a new platformio project for an ESP8266 NodeMCU that just blinks an LED over wifi, board = d1_mini", "should_trigger": false}, {"query": "my macbook isn't detecting my iphone over usb-c anymore, tried multiple cables, shows up in finder sometimes but not others", "should_trigger": false}, {"query": "got a CH340-based arduino nano clone, driver installed, still not showing in arduino ide port list on macOS sequoia", "should_trigger": true}, {"query": "porting my existing m5stack core2 touch code over to a bare esp32 + gt911 capacitive touch panel, coordinates come out scaled wrong", "should_trigger": false}, {"query": "can you write me a simple counter app for a generic 128x64 oled display on an arduino uno, no touch involved", "should_trigger": false}, {"query": "the resistive touch screen on my smart yellow esp32 board (2432s028) responds but only in a small area in the corner, rest of the screen doesn't register taps", "should_trigger": true}, {"query": "what's the difference between HSPI and VSPI on the esp32 in general, just trying to understand the two spi peripherals conceptually for a new project", "should_trigger": false}];
+
+    let evalItems = [...EVAL_DATA];
+
+    function render() {
+      const tbody = document.getElementById('eval-body');
+      tbody.innerHTML = '';
+
+      // Sort: should-trigger first, then should-not-trigger
+      const sorted = evalItems
+        .map((item, origIdx) => ({ ...item, origIdx }))
+        .sort((a, b) => (b.should_trigger ? 1 : 0) - (a.should_trigger ? 1 : 0));
+
+      let lastGroup = null;
+      sorted.forEach(item => {
+        const group = item.should_trigger ? 'trigger' : 'no-trigger';
+        if (group !== lastGroup) {
+          const headerRow = document.createElement('tr');
+          headerRow.className = 'section-header';
+          headerRow.innerHTML = `<td colspan="3">${item.should_trigger ? 'Should Trigger' : 'Should NOT Trigger'}</td>`;
+          tbody.appendChild(headerRow);
+          lastGroup = group;
+        }
+
+        const idx = item.origIdx;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><textarea class="query-input" onchange="updateQuery(${idx}, this.value)">${escapeHtml(item.query)}</textarea></td>
+          <td>
+            <label class="toggle">
+              <input type="checkbox" ${item.should_trigger ? 'checked' : ''} onchange="updateTrigger(${idx}, this.checked)">
+              <span class="slider"></span>
+            </label>
+            <span style="margin-left:8px;font-size:0.8rem;color:#b0aea5">${item.should_trigger ? 'Yes' : 'No'}</span>
+          </td>
+          <td><button class="btn-delete" onclick="deleteRow(${idx})">Delete</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      updateSummary();
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function updateQuery(idx, value) { evalItems[idx].query = value; updateSummary(); }
+    function updateTrigger(idx, value) { evalItems[idx].should_trigger = value; render(); }
+    function deleteRow(idx) { evalItems.splice(idx, 1); render(); }
+
+    function addRow() {
+      evalItems.push({ query: '', should_trigger: true });
+      render();
+      const inputs = document.querySelectorAll('.query-input');
+      inputs[inputs.length - 1].focus();
+    }
+
+    function updateSummary() {
+      const trigger = evalItems.filter(i => i.should_trigger).length;
+      const noTrigger = evalItems.filter(i => !i.should_trigger).length;
+      document.getElementById('summary').textContent =
+        `${evalItems.length} queries total: ${trigger} should trigger, ${noTrigger} should not trigger`;
+    }
+
+    function exportEvalSet() {
+      const valid = evalItems.filter(i => i.query.trim() !== '');
+      const data = valid.map(i => ({ query: i.query.trim(), should_trigger: i.should_trigger }));
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'eval_set.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    render();
+  </script>
+</body>
+</html>

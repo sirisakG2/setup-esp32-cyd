@@ -1,0 +1,1326 @@
+<!-- Topic: esp32-cyd-bringup skill — eval run results (Outputs + Benchmark: with-skill vs. baseline on cable/driver, SPI-bus, and touch-calibration test cases) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "esp32-cyd-bringup", "runs": [{"id": "cable-not-driver-with_skill", "prompt": "I just got an ESP32-2432S028 board (the cheap yellow display one) and plugged it into my Mac with a USB-C cable. It's not showing up in the Arduino IDE port list at all, and I already installed the CH340 driver a while back for a different project. What's going on?", "eval_id": 1, "outputs": [{"name": "response.md", "type": "text", "content": "Before assuming it's a driver problem, let's rule out the most common culprit first: **the cable**.\n\nA huge number of USB-C cables \u2014 especially ones that came bundled with LED strips, power banks, or other cheap gadgets \u2014 only carry power, not data. If the board's LED lit up when you plugged it in, that only proves it's getting power; it tells you nothing about whether the data lines are connected. This is by far the single most common reason a CYD board (or any ESP32 board) doesn't show up as a serial port, even more common than driver issues.\n\nTry this:\n\n1. **Swap the cable.** Use one you know carries data \u2014 for example, a cable you'd use to sync a phone or transfer files, not just charge it. Plug it directly into your Mac rather than through a hub or dock if you can.\n2. **Try the other USB-C port** on your Mac, if it has more than one.\n3. Then check for the port with:\n   ```bash\n   ls -la /dev/cu.*\n   ```\n   You're looking for something like `/dev/cu.usbserial-*` or `/dev/cu.wchusbserial*`. If you only see the built-in `Bluetooth-Incoming-Port` / `debug-console` entries, it's still not detected.\n\nOn the driver side: since you already installed the CH340 driver for a previous project, the driver itself is probably fine \u2014 but it's worth knowing that modern macOS requires explicit approval for kernel extensions even after installation. Check **System Settings \u2192 Privacy & Security** for a \"blocked software\" banner and click Allow if you see one, then reboot. One catch: if nothing is plugged in (or the cable isn't carrying data), there's nothing for the driver to talk to, so you won't see any blocked-software banner at all \u2014 that's expected in that state, not proof the driver is broken.\n\nSo the practical order to check is:\n1. Try a different (known-data) cable \u2014 most likely fix.\n2. Try a different USB-C port.\n3. Only then dig into the driver/security approval, since you've already installed it once.\n\nIf you want more detail once something shows up (or to confirm at a lower level whether the Mac sees the USB device at all even without a serial port appearing), these give more visibility:\n\n```bash\nioreg -p IOUSB -l -w0 | grep -E '\"USB Product Name\"|\"USB Vendor Name\"'\nsystem_profiler SPUSBDataType\n```\n\nIf `system_profiler SPUSBDataType` comes back completely empty even after trying a different cable and port, run `system_profiler SPHardwareDataType` too \u2014 if that's also empty, something's off with `system_profiler` itself (rare); if that one works fine while `SPUSBDataType` stays empty, it's consistent with nothing actually being connected over USB with data.\n\nOnce `/dev/cu.usbserial-*` or `/dev/cu.wchusbserial*` shows up, you're good to move on to setting up the project (PlatformIO + LovyanGFX is the recommended path for this board's display and touch) \u2014 happy to walk through that next.\n"}], "grading": {"expectations": [{"text": "Identifies a charge-only / data-incapable USB cable as a likely cause", "passed": true, "evidence": "Opens with 'the most common culprit first: the cable' and explains many USB-C cables are power-only."}, {"text": "Explicitly suggests trying a different/known-good data cable", "passed": true, "evidence": "'Swap the cable. Use one you know carries data...'"}, {"text": "Gives a concrete shell command to check for the device (e.g. ls /dev/cu.*, ioreg, or system_profiler)", "passed": true, "evidence": "Gives `ls -la /dev/cu.*`, plus `ioreg -p IOUSB -l -w0 | grep ...` and `system_profiler SPUSBDataType`."}, {"text": "Does not lead with reinstalling/reconfiguring the CH340 driver as the first troubleshooting step, given the user said it's already installed", "passed": true, "evidence": "Driver is addressed third, after cable and port, and states 'the driver itself is probably fine'."}, {"text": "Notes that the board's LED lighting up only proves power, not a data connection", "passed": true, "evidence": "'If the board's LED lit up when you plugged it in, that only proves it's getting power; it tells you nothing about whether the data lines are connected.'"}]}}, {"id": "cable-not-driver-without_skill", "prompt": "I just got an ESP32-2432S028 board (the cheap yellow display one) and plugged it into my Mac with a USB-C cable. It's not showing up in the Arduino IDE port list at all, and I already installed the CH340 driver a while back for a different project. What's going on?", "eval_id": 1, "outputs": [{"name": "response.md", "type": "text", "content": "Good news is this is a really common symptom for that board, and it's usually not the driver. Here's how I'd narrow it down, roughly in order of likelihood:\n\n**1. Try a different USB-C cable first.**\nThis is the #1 culprit. A lot of \"USB-C cables\" \u2014 especially ones bundled with cheap boards, or charging cables you have lying around \u2014 are power-only and don't have the data lines wired up. If the cable that came in the box with the CYD is the one you're using, swap it for a cable you know does data transfer (e.g. one you've used to sync a phone or transfer files). Also try a different USB port on your Mac directly (not through a hub/dock if you're using one).\n\nQuick check: with the board plugged in, open Terminal and run:\n```\nls /dev/cu.*\n```\nand compare it to the same command with the board unplugged. If nothing new appears, the Mac isn't even seeing a USB device change, which points at the cable or port rather than the driver.\n\nYou can also check at the USB level regardless of drivers:\n```\nsystem_profiler SPUSBDataType\n```\nIf you scroll through that output and don't see a CH340, CP2102, or \"USB Serial\" type device listed at all, the Mac's USB layer isn't detecting the chip \u2014 again, cable/port territory, not Arduino IDE's problem.\n\n**2. Confirm which USB-UART chip your board actually has.**\nHere's the catch with the CYD specifically: different manufacturing batches of the ESP32-2432S028 use different USB-to-serial chips. Some use the CH340C, but a good number of them use a CP2102 instead. It's worth popping open a photo you've taken of the board (or looking at the small chip near the USB-C port) and checking the printed label. If yours is a CP2102 and you only ever installed the CH340 driver, that would explain why it's invisible \u2014 you'd need the Silicon Labs CP210x VCP driver instead.\n\n**3. Check that the CH340 driver is actually still active on this macOS version.**\nSince you installed it \"a while back,\" it's worth confirming it survived any macOS updates since then, and that it's approved:\n- Go to **System Settings \u2192 Privacy & Security**, scroll down, and check if there's a blocked system software notice from WCH/CH340 waiting for approval \u2014 macOS sometimes silently blocks a kext after an OS update until you explicitly allow it again.\n- Run `system_profiler SPUSBDataType` or check `kextstat | grep -i ch34` (for the older kext-based driver) to see if it's loaded at all.\n- If you're on a fairly recent macOS (Sonoma/Sequoia) and the driver is an old build, it may be worth grabbing the latest CH340/CH341 driver directly from the WCH website \u2014 recent versions ship as a proper notarized package that plays nicer with Apple Silicon and current macOS security requirements than older versions floating around from old tutorials.\n\n**4. Reboot after any driver reinstall/approval.**\nIf you end up reinstalling or re-approving anything in step 3, do a full restart \u2014 CH340 driver changes on macOS often don't take effect until reboot, not just replugging the cable.\n\n**5. Make sure Arduino IDE has the right board package selected, and check with the board unplugged/replugged.**\nLess likely to be the issue if the port isn't showing at all (that's an OS-level problem, not an Arduino IDE problem), but worth a sanity check: make sure you've got the \"esp32 by Espressif Systems\" board package installed in Boards Manager, then with Arduino IDE open, physically unplug and replug the board and watch the Tools \u2192 Port menu to see if anything flickers in.\n\n**My actual guess, in order:** try a known-good data cable first \u2014 that alone fixes this more often than not with these boards. If that doesn't do it, check whether your board has a CP2102 instead of a CH340 (very common on this specific model), and install the matching driver. If both of those check out, then dig into the macOS driver-approval / reboot angle.\n\nLet me know what `system_profiler SPUSBDataType` shows after you swap cables and I can help narrow it down further.\n"}], "grading": {"expectations": [{"text": "Identifies a charge-only / data-incapable USB cable as a likely cause", "passed": true, "evidence": "'Try a different USB-C cable first. This is the #1 culprit.'"}, {"text": "Explicitly suggests trying a different/known-good data cable", "passed": true, "evidence": "'swap it for a cable you know does data transfer'"}, {"text": "Gives a concrete shell command to check for the device (e.g. ls /dev/cu.*, ioreg, or system_profiler)", "passed": true, "evidence": "Gives `ls /dev/cu.*` and `system_profiler SPUSBDataType`."}, {"text": "Does not lead with reinstalling/reconfiguring the CH340 driver as the first troubleshooting step, given the user said it's already installed", "passed": true, "evidence": "Cable is step 1; driver checks are step 3, after also raising a CP2102-vs-CH340 chip possibility as step 2."}, {"text": "Notes that the board's LED lighting up only proves power, not a data connection", "passed": false, "evidence": "Response never mentions the board's LED or what it does/doesn't prove."}]}}, {"id": "wrong-spi-bus-with_skill", "prompt": "Working on a PlatformIO + LovyanGFX project for a CYD board (ESP32-2432S028R). Display renders fine but touch never registers \u2014 getTouch() always returns false no matter how hard I tap. Here's my touch config: cfg.pin_sclk=14; cfg.pin_mosi=13; cfg.pin_miso=12; cfg.pin_cs=33; cfg.pin_int=36; cfg.bus_shared=true; cfg.spi_host=VSPI_HOST;", "eval_id": 2, "outputs": [{"name": "response.md", "type": "text", "content": "Found it \u2014 your touch config is wired to the **display's SPI bus (VSPI)**, but on the ESP32-2432S028R the XPT2046 touch controller sits on a **completely separate bus (HSPI)** with its own pin set. This is the single most common mistake on this board, because most other display+touch boards *do* share one bus, so copy-pasted configs assume it here too \u2014 but this one doesn't.\n\nCompare your config to the actual wiring:\n\n| Signal | Your config | Actual touch (HSPI) pin |\n|---|---|---|\n| SCLK | 14 | **25** |\n| MOSI | 13 | **32** |\n| MISO | 12 | **39** |\n| CS | 33 | 33 \u2705 |\n| IRQ | 36 | 36 \u2705 |\n| SPI bus | `VSPI_HOST` | **`HSPI_HOST`** |\n| bus_shared | `true` | **`false`** |\n\nYour SCLK/MOSI/MISO (14/13/12) are actually the *display's* pins \u2014 that's why nothing responds: you're pointed at the wrong physical bus entirely. CS and IRQ happen to already be correct.\n\nFixed config:\n\n```cpp\ncfg.pin_sclk = 25;\ncfg.pin_mosi = 32;\ncfg.pin_miso = 39;\ncfg.pin_cs   = 33;\ncfg.pin_int  = 36;\ncfg.bus_shared = false;   // touch is NOT on the display's bus on this board\ncfg.spi_host = HSPI_HOST; // display uses VSPI, touch uses HSPI\n```\n\nFor reference, the full pin map for this board:\n\n**Display (VSPI):** SCLK 14, MOSI 13, MISO 12, CS 15, DC 2, RST -1 (unwired), Backlight (PWM) 21\n\n**Touch (HSPI, bus_shared = false):** SCLK 25, MOSI 32, MISO 39, CS 33, IRQ 36\n\n### How to confirm the fix before moving to calibration\n\nAdd a debug print on a timer showing the IRQ pin and raw touch values, then tap the screen while watching serial output:\n\n```cpp\nSerial.printf(\"t=%lu IRQ=%d\\n\", millis(), digitalRead(36));\nif (display.getTouchRaw(&rx, &ry)) {\n  Serial.printf(\"t=%lu RAW x=%d y=%d\\n\", millis(), rx, ry);\n}\n```\n\n- If IRQ stays frozen at 1 and raw values never change even while tapping hard, you're still not actually talking to the chip \u2014 double check the pin table above (wrong bus/CS/SCLK/MOSI/MISO is the usual culprit, which is exactly what was happening here).\n- Once IRQ toggles to 0 and raw x/y values change on tap, the chip is being read correctly. At that point `getTouch()` should start returning true \u2014 any remaining issue (wrong location on screen, inverted axes, mirrored) is a *calibration* problem, not a wiring one, and is a separate step (raw touch coordinates on this board don't map 1:1 to screen coordinates \u2014 expect to need a per-unit linear calibration by tapping the four corners and deriving the mapping empirically, since the touch panel's mounting rotation varies between units/batches).\n"}], "grading": {"expectations": [{"text": "States that touch (XPT2046) is on a separate SPI bus (HSPI) from the display, not sharing the display's SCLK/MOSI/MISO pins", "passed": true, "evidence": "'the XPT2046 touch controller sits on a completely separate bus (HSPI) with its own pin set.'"}, {"text": "Gives the corrected touch pin numbers: SCLK=25, MOSI=32, MISO=39, CS=33", "passed": true, "evidence": "Table and code both give SCLK=25, MOSI=32, MISO=39, CS=33."}, {"text": "Says bus_shared should be set to false for the touch config", "passed": true, "evidence": "`cfg.bus_shared = false;   // touch is NOT on the display's bus on this board`"}, {"text": "Mentions a concrete diagnostic signature (e.g. IRQ pin staying high, or raw touch values never changing) as confirmation of a wiring/pin problem", "passed": true, "evidence": "'If IRQ stays frozen at 1 and raw values never change even while tapping hard, you're still not actually talking to the chip.'"}]}}, {"id": "wrong-spi-bus-without_skill", "prompt": "Working on a PlatformIO + LovyanGFX project for a CYD board (ESP32-2432S028R). Display renders fine but touch never registers \u2014 getTouch() always returns false no matter how hard I tap. Here's my touch config: cfg.pin_sclk=14; cfg.pin_mosi=13; cfg.pin_miso=12; cfg.pin_cs=33; cfg.pin_int=36; cfg.bus_shared=true; cfg.spi_host=VSPI_HOST;", "eval_id": 2, "outputs": [{"name": "response.md", "type": "text", "content": "Found it \u2014 your touch SPI pins are wrong. `pin_sclk=14`, `pin_mosi=13`, `pin_miso=12` are the **display's** SPI pins, not the touch controller's. On the ESP32-2432S028R (CYD), the XPT2046 touch chip sits on a completely separate set of GPIOs from the ILI9341 display, even though both are nominally \"SPI\":\n\n| Signal | Display (ILI9341) | Touch (XPT2046) |\n|---|---|---|\n| SCLK | 14 | **25** |\n| MOSI | 13 | **32** |\n| MISO | 12 | **39** |\n| CS    | 15 | 33 (yours is correct) |\n| IRQ/INT | \u2014 | 36 (yours is correct) |\n\nSo `pin_cs` and `pin_int` were already right, but `pin_sclk/pin_mosi/pin_miso` were accidentally copy-pasted from the display bus config. Since those pins aren't wired to the touch controller at all, `getTouch()` has no way to ever see a response \u2014 it's clocking out on lines the XPT2046 isn't listening on.\n\nThe other thing to fix: `bus_shared=true`. That flag is for boards where touch and display genuinely share the same physical SCLK/MOSI/MISO lines and are only distinguished by CS. That's not the case on the CYD \u2014 touch has its own dedicated bus on 25/32/39 \u2014 so this should be `false`. Leaving it `true` here just adds unnecessary bus-arbitration logic for a bus that isn't actually shared, which can also produce a silent-fail behavior like you're seeing.\n\nCorrected config:\n\n```cpp\nauto touch_cfg = _touch_instance.config();\n\ntouch_cfg.x_min = 0;\ntouch_cfg.x_max = 239;\ntouch_cfg.y_min = 0;\ntouch_cfg.y_max = 319;\n\ntouch_cfg.pin_sclk = 25;   // was 14 (display's SCLK) \u2014 fixed\ntouch_cfg.pin_mosi = 32;   // was 13 (display's MOSI) \u2014 fixed\ntouch_cfg.pin_miso = 39;   // was 12 (display's MISO) \u2014 fixed\ntouch_cfg.pin_cs   = 33;   // already correct\ntouch_cfg.pin_int  = 36;   // already correct\n\ntouch_cfg.bus_shared = false;   // was true \u2014 touch has its own bus, not shared with the display\ntouch_cfg.spi_host = VSPI_HOST; // fine to leave; irrelevant once bus_shared is false since LovyanGFX\n                                 // drives these pins independently for the touch transactions\ntouch_cfg.freq = 1000000;       // 1 MHz \u2014 safe default for XPT2046, bump later if needed\n\n_touch_instance.config(touch_cfg);\n_panel_instance.setTouch(&_touch_instance);\n```\n\nA few things to double check after the fix:\n\n1. **`setTouch()` is actually called** on your panel instance after configuring the touch driver \u2014 easy to forget, and if it's missing `getTouch()` will also always return false even with correct pins.\n2. **Rotation/offset mismatch isn't your issue here** (that only causes wrong coordinates, not zero response), so don't chase calibration yet \u2014 get raw `getTouch()` returning `true` first, then worry about `x_min/x_max/y_min/y_max` and `setRotation()`/`offset_rotation` alignment.\n3. If it still doesn't respond after the pin fix, sanity-check with a multimeter or a tiny standalone sketch that pin 36 (IRQ) actually pulls low when you press the screen \u2014 pin 36 is input-only (no pull-up), so a flaky solder joint there is a common secondary failure mode on cheap CYD units.\n4. Make sure nothing else on your board is also claiming GPIO 32 (it's sometimes tied up by onboard peripherals on some CYD variants/revisions) \u2014 check your full `Set()`/board init code for conflicts.\n\nOnce the pins are corrected, `getTouch()` should start returning `true` on press even before calibration is dialed in.\n"}], "grading": {"expectations": [{"text": "States that touch (XPT2046) is on a separate SPI bus (HSPI) from the display, not sharing the display's SCLK/MOSI/MISO pins", "passed": true, "evidence": "'the XPT2046 touch chip sits on a completely separate set of GPIOs from the ILI9341 display'"}, {"text": "Gives the corrected touch pin numbers: SCLK=25, MOSI=32, MISO=39, CS=33", "passed": true, "evidence": "Table and code both give SCLK=25, MOSI=32, MISO=39, CS=33."}, {"text": "Says bus_shared should be set to false for the touch config", "passed": true, "evidence": "'touch has its own dedicated bus on 25/32/39 \u2014 so this should be false.'"}, {"text": "Mentions a concrete diagnostic signature (e.g. IRQ pin staying high, or raw touch values never changing) as confirmation of a wiring/pin problem", "passed": false, "evidence": "Only suggests a physical multimeter check that pin 36 pulls low on press; does not describe the frozen-IRQ/frozen-raw-value serial-log signature."}]}}, {"id": "axis-swap-calibration-with_skill", "prompt": "My CYD's touch is detected now (IRQ toggles fine, raw values change when I tap) but the yellow dot I draw on tap shows up in totally the wrong place -- feels rotated/flipped relative to where I actually touch. setRotation(1) on the display. How do I fix the mapping?", "eval_id": 3, "outputs": [{"name": "response.md", "type": "text", "content": "Good news: what you're describing (IRQ toggles, raw values change with taps, but the dot lands in the wrong/rotated/mirrored spot) is a **calibration problem, not a wiring problem**. The XPT2046 is being read correctly over its SPI bus \u2014 you just need to map its raw coordinate space onto your screen's coordinate space, which is rotated/flipped relative to the display panel on this board (this varies per unit/batch, so it has to be measured, not guessed).\n\nDon't try to fight this with LovyanGFX's `offset_rotation` enum by trial and error \u2014 on this board the actual transform (e.g. raw X/Y fully swapped *and* both inverted) often doesn't map cleanly onto any single enum value. It's much more reliable to bypass `getTouch()`'s built-in calibration, read raw values with `getTouchRaw()`, and do your own linear mapping with `map()` + `constrain()`.\n\n## Step 1 \u2014 log raw touch with timestamps\n\nFlash a build that prints raw touch on every read, with a timestamp so individual taps are distinguishable in the log:\n\n```cpp\nint32_t rx, ry;\nif (display.getTouchRaw(&rx, &ry)) {\n  Serial.printf(\"t=%lu RAW x=%d y=%d\\n\", millis(), rx, ry);\n}\n```\n\n## Step 2 \u2014 capture the four corners\n\nWith `setRotation(1)` your screen is 320x240 (landscape). Tap the four corners **in this exact order**, pausing about 2 seconds between each tap so they form separable clusters in the log:\n\n1. top-left\n2. top-right\n3. bottom-right\n4. bottom-left\n\nIf you have serial access from your own terminal, just watch the monitor and tap along. If you want a clean capture window, there's a small helper script for this:\n\n```bash\npython3 capture_raw_touch.py /dev/cu.usbserial-XXXX 20\n```\n\n(replace with your actual port; bump the 20s window if you need more time). It just dumps everything the board prints for that window \u2014 run it, then start tapping corners in order once it says it's capturing.\n\n## Step 3 \u2014 average each cluster, and don't assume raw_x \u2192 screen_x\n\nFor each corner, average the raw x/y values in that tap's cluster to get four `(raw_x, raw_y)` pairs. Then compare them across corners to figure out:\n\n- which raw axis actually moves when you go left\u2194right on screen vs. up\u2194down on screen (it may not be the axis you'd expect \u2014 on one observed unit `raw_x` tracked screen **Y** and `raw_y` tracked screen **X**, i.e. the axes were swapped, not just rotated the way `setRotation()` would suggest)\n- which direction each axis runs in (increasing raw value could mean increasing *or* decreasing screen coordinate)\n\nThis is exactly why guessing at `offset_rotation` doesn't work reliably here \u2014 the panel can be mounted in a way that's a 90\u00b0-rotation-plus-axis-swap-plus-double-invert relative to the display, and that combination isn't always expressible as one clean enum value.\n\n## Step 4 \u2014 hardcode the measured extremes and map directly\n\nOnce you know which raw axis feeds which screen axis, hardcode the four extreme values and replace whatever calibration/`getTouch()` call you're using with a direct `map()` + `constrain()`:\n\n```cpp\n// Fill these in from your own corner measurements (step 3).\nstatic const int32_t RAW_Y_AT_SCREEN_X0   = /* measured */;\nstatic const int32_t RAW_Y_AT_SCREEN_X319 = /* measured */;\nstatic const int32_t RAW_X_AT_SCREEN_Y0   = /* measured */;\nstatic const int32_t RAW_X_AT_SCREEN_Y239 = /* measured */;\n\nvoid loop() {\n  int32_t rx, ry;\n  if (display.getTouchRaw(&rx, &ry)) {\n    int32_t sx = constrain(map(ry, RAW_Y_AT_SCREEN_X0, RAW_Y_AT_SCREEN_X319, 0, 319), 0, 319);\n    int32_t sy = constrain(map(rx, RAW_X_AT_SCREEN_Y0, RAW_X_AT_SCREEN_Y239, 0, 239), 0, 239);\n    display.fillCircle(sx, sy, 4, TFT_YELLOW);\n  }\n  delay(10);\n}\n```\n\nNote the example above feeds `ry` into `sx` and `rx` into `sy` \u2014 that's the swapped-axis case one specific unit needed. **Use whatever mapping step 3 actually showed for your unit** \u2014 if your raw_x tracks screen_x directly, then it should be `map(rx, RAW_X_AT_SCREEN_X0, RAW_X_AT_SCREEN_X319, 0, 319)` etc. instead. The point is to derive this from your own four measured corners, not copy the swap blindly.\n\nAlso double check the bounds: with `setRotation(1)` your screen is 320 wide x 240 tall, so screen X ranges 0\u2013319 and screen Y ranges 0\u2013239 (matches the constants above). If you're using a different rotation, adjust the `319`/`239` (and the whole calibration, since the panel mounting is fixed but your screen's logical width/height swap with rotation).\n\n## Step 5 \u2014 verify with a slow drag, not just taps\n\nReflash, then drag a finger slowly across the screen in both axes (not just re-tap the corners) and confirm the yellow dot tracks smoothly and stays under your finger the whole way \u2014 this catches cases where corners happen to line up but the middle is off (e.g. a sign error that only shows up as non-linearity, or panel nonlinearity near the edges).\n\nIf after this the dot is *close* but consistently off by a small constant amount, it's usually fine to nudge the raw extremes by that amount rather than re-deriving everything \u2014 but if it's still rotated/mirrored, re-check step 3, since that means one of the axis/direction assignments is still wrong.\n"}], "grading": {"expectations": [{"text": "Recommends empirically measuring raw touch values (e.g. tapping the four corners) rather than only guessing rotation/offset values", "passed": true, "evidence": "'Don't try to fight this with LovyanGFX's offset_rotation enum by trial and error... read raw values with getTouchRaw()... tap the four corners.'"}, {"text": "Suggests logging raw touch x/y with a timestamp so individual taps can be distinguished", "passed": true, "evidence": "`Serial.printf(\"t=%lu RAW x=%d y=%d\\n\", millis(), rx, ry);`"}, {"text": "Provides example code using map()/constrain() (or equivalent linear mapping) to convert raw touch coordinates to screen coordinates", "passed": true, "evidence": "Full loop() example using constrain(map(...)) for sx/sy."}, {"text": "Does not present trial-and-error of the offset_rotation enum as the sole/primary fix", "passed": true, "evidence": "Explicitly argues against offset_rotation trial-and-error as unreliable and recommends the empirical map() approach instead."}]}}, {"id": "axis-swap-calibration-without_skill", "prompt": "My CYD's touch is detected now (IRQ toggles fine, raw values change when I tap) but the yellow dot I draw on tap shows up in totally the wrong place -- feels rotated/flipped relative to where I actually touch. setRotation(1) on the display. How do I fix the mapping?", "eval_id": 3, "outputs": [{"name": "response.md", "type": "text", "content": "Good news: this is the classic CYD touch/display mismatch, and it's almost always fixable without new hardware or wiring changes. Here's what's going on and how to fix it.\n\n## Why this happens\n\nThe XPT2046 touch controller has its **own fixed physical coordinate system** wired to the resistive touch panel \u2014 it has no idea the display exists, let alone that you called `setRotation(1)` on it. `setRotation()` only rotates how the *display driver* maps pixels to the physical screen. Touch coordinates are a completely separate raw ADC stream (X: 0\u20134095, Y: 0\u20134095 roughly) that comes out in whatever orientation the touch panel happens to be mounted \u2014 which on the CYD is typically **portrait, and often with X/Y swapped and/or one or both axes inverted relative to the display's native orientation.**\n\nSo when you rotate the display but don't also transform the touch coordinates to match, you get exactly what you're seeing: taps register, but the reported point is mirrored, swapped, or rotated relative to where you actually touched.\n\nThere are two common ways people run touch on a CYD \u2014 figure out which one you're using, since the fix differs slightly.\n\n---\n\n## Option A: You're using LovyanGFX's built-in touch support\n\nIf your `LGFX` config has a `Touch_XPT2046` block and you're calling `lgfx.getTouch(&x, &y)`, LovyanGFX *can* handle rotation for you automatically \u2014 but only if you give it a calibration matrix. Without calibration, it just passes through raw-ish values, which is likely what you're seeing.\n\nRun LovyanGFX's calibration routine **after** you've set the rotation you intend to use in production:\n\n```cpp\nvoid setup() {\n  lgfx.init();\n  lgfx.setRotation(1);   // set final rotation FIRST\n\n  uint16_t calibData[8];\n  lgfx.calibrateTouch(calibData, TFT_WHITE, TFT_BLACK, 20);\n  // This shows 4 crosshair targets, one per corner \u2014 tap each one.\n\n  lgfx.setTouchCalibrate(calibData);\n\n  // Optional: print calibData so you can hardcode it and skip\n  // the interactive calibration on every boot.\n  for (int i = 0; i < 8; i++) Serial.printf(\"%d, \", calibData[i]);\n}\n```\n\nThen hardcode the printed values so you don't have to recalibrate every boot:\n\n```cpp\nuint16_t calibData[8] = { /* paste your 8 values here */ };\nlgfx.setTouchCalibrate(calibData);\n```\n\nThis is the cleanest fix \u2014 LovyanGFX bakes the rotation into the calibration matrix, so `getTouch()` returns coordinates already in screen space for whatever rotation you set.\n\n---\n\n## Option B: You're using a raw XPT2046 library (e.g. `XPT2046_Touchscreen` by PaulStoffregen) alongside LovyanGFX/TFT_eSPI for the display\n\nThis library has no concept of display rotation at all \u2014 it just gives you raw touch X/Y (and Z pressure). You have to do the swap/invert/scale yourself, matching whatever `setRotation()` value you used on the display.\n\nFirst, figure out empirically what transform you need \u2014 don't guess, because CYD units and library versions vary. Add a quick debug print:\n\n```cpp\nTS_Point p = ts.getPoint();\nSerial.printf(\"raw x=%d y=%d\\n\", p.x, p.y);\n```\n\nTap the **physical top-left corner** of your rotated screen and note the raw values, then tap the **physical bottom-right corner** and note those. That tells you:\n- Whether X and Y are swapped (does moving finger left-right on screen change raw `x` or raw `y`?)\n- Whether either axis needs inverting (does raw value increase or decrease as you move toward higher screen coordinates?)\n\nFor the standard 2.8\" CYD (ILI9341 + XPT2046, resistive touch panel mounted the usual way) with `setRotation(1)` (landscape, USB port on the right), the typical working transform is:\n\n```cpp\n#define TOUCH_MIN_X 200\n#define TOUCH_MAX_X 3800\n#define TOUCH_MIN_Y 200\n#define TOUCH_MAX_Y 3800\n\nvoid getScreenTouch(int &screenX, int &screenY) {\n  TS_Point p = ts.getPoint();\n\n  // Swap raw axes (rotation 1 typically needs this on CYD)\n  int rawX = p.y;\n  int rawY = p.x;\n\n  // Map raw ADC range to screen pixel range, inverting as needed\n  screenX = map(rawX, TOUCH_MIN_X, TOUCH_MAX_X, 0, 320);\n  screenY = map(rawY, TOUCH_MIN_Y, TOUCH_MAX_Y, 240, 0);  // inverted\n\n  screenX = constrain(screenX, 0, 319);\n  screenY = constrain(screenY, 0, 239);\n}\n```\n\nIf your dot is still off after this, don't randomly flip flags \u2014 work through it systematically using the corner-tap test above. There are really only 8 possible combinations (swap X/Y: yes/no, invert X: yes/no, invert Y: yes/no), and the corner test tells you exactly which one you need in one or two tries:\n\n1. Tap physical top-left \u2192 should read near screen (0,0)\n2. Tap physical top-right \u2192 should read near screen (319,0)\n3. Tap physical bottom-left \u2192 should read near screen (0,239)\n\nIf X and Y are swapped, corners 2 and 3 will look like each other's results. If an axis is inverted, values will run backwards (high raw value where you expect low).\n\nFor other rotations, the raw min/max mapping and swap flip:\n- `setRotation(0)`: usually no swap, both axes typically need inversion depending on panel batch\n- `setRotation(2)`: same swap as 0, both inversions flipped from rotation 0\n- `setRotation(3)`: same swap as 1, both inversions flipped from rotation 1\n\n---\n\n## Quickest path if you just want it working now\n\n1. Add the raw-print debug line above.\n2. Tap all 4 corners of your rotated screen, write down the 4 (rawX, rawY) pairs.\n3. From that, derive your swap/invert/map constants (or just run LovyanGFX's `calibrateTouch()` if you're on that stack \u2014 it does this for you and is more accurate than eyeballing raw ranges).\n4. Hardcode the result so you're not calibrating on every boot.\n\nIf you paste your current touch init code (which library, and how you're calling `getTouch`/`getPoint`), I can give you the exact swap/invert constants instead of the general recipe above.\n"}], "grading": {"expectations": [{"text": "Recommends empirically measuring raw touch values (e.g. tapping the four corners) rather than only guessing rotation/offset values", "passed": true, "evidence": "Option B: 'figure out empirically what transform you need \u2014 don't guess... Tap the physical top-left corner... then tap the physical bottom-right corner.'"}, {"text": "Suggests logging raw touch x/y with a timestamp so individual taps can be distinguished", "passed": false, "evidence": "Debug print is `Serial.printf(\"raw x=%d y=%d\\n\", p.x, p.y);` with no timestamp; taps are disambiguated only by the user manually noting values between prompts, not a timestamped log."}, {"text": "Provides example code using map()/constrain() (or equivalent linear mapping) to convert raw touch coordinates to screen coordinates", "passed": true, "evidence": "`getScreenTouch()` function uses `map()` and `constrain()`."}, {"text": "Does not present trial-and-error of the offset_rotation enum as the sole/primary fix", "passed": true, "evidence": "Never mentions offset_rotation at all; instead offers LovyanGFX's calibrateTouch() routine or manual corner-derived swap/invert constants."}]}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "esp32-cyd-bringup", "skill_path": "/Users/anotai/.claude/skills/esp32-cyd-bringup", "executor_model": "claude-sonnet-5", "analyzer_model": "claude-sonnet-5", "timestamp": "2026-09-11T00:00:00Z", "evals_run": [1, 2, 3], "runs_per_configuration": 1}, "runs": [{"eval_id": 1, "eval_name": "cable-not-driver", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 23.7, "tokens": 57755, "tool_calls": null, "errors": 0}, "expectations": [{"text": "Identifies a charge-only / data-incapable USB cable as a likely cause", "passed": true, "evidence": "Opens with 'the most common culprit first: the cable' and explains many USB-C cables are power-only."}, {"text": "Explicitly suggests trying a different/known-good data cable", "passed": true, "evidence": "'Swap the cable. Use one you know carries data...'"}, {"text": "Gives a concrete shell command to check for the device (e.g. ls /dev/cu.*, ioreg, or system_profiler)", "passed": true, "evidence": "Gives `ls -la /dev/cu.*`, plus `ioreg -p IOUSB -l -w0 | grep ...` and `system_profiler SPUSBDataType`."}, {"text": "Does not lead with reinstalling/reconfiguring the CH340 driver as the first troubleshooting step, given the user said it's already installed", "passed": true, "evidence": "Driver is addressed third, after cable and port, and states 'the driver itself is probably fine'."}, {"text": "Notes that the board's LED lighting up only proves power, not a data connection", "passed": true, "evidence": "'If the board's LED lit up when you plugged it in, that only proves it's getting power; it tells you nothing about whether the data lines are connected.'"}], "notes": []}, {"eval_id": 1, "eval_name": "cable-not-driver", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.8, "passed": 4, "failed": 1, "total": 5, "time_seconds": 34.7, "tokens": 54329, "tool_calls": null, "errors": 0}, "expectations": [{"text": "Identifies a charge-only / data-incapable USB cable as a likely cause", "passed": true, "evidence": "'Try a different USB-C cable first. This is the #1 culprit.'"}, {"text": "Explicitly suggests trying a different/known-good data cable", "passed": true, "evidence": "'swap it for a cable you know does data transfer'"}, {"text": "Gives a concrete shell command to check for the device (e.g. ls /dev/cu.*, ioreg, or system_profiler)", "passed": true, "evidence": "Gives `ls /dev/cu.*` and `system_profiler SPUSBDataType`."}, {"text": "Does not lead with reinstalling/reconfiguring the CH340 driver as the first troubleshooting step, given the user said it's already installed", "passed": true, "evidence": "Cable is step 1; driver checks are step 3, after also raising a CP2102-vs-CH340 chip possibility as step 2."}, {"text": "Notes that the board's LED lighting up only proves power, not a data connection", "passed": false, "evidence": "Response never mentions the board's LED or what it does/doesn't prove."}], "notes": []}, {"eval_id": 2, "eval_name": "wrong-spi-bus", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 18.5, "tokens": 57638, "tool_calls": null, "errors": 0}, "expectations": [{"text": "States that touch (XPT2046) is on a separate SPI bus (HSPI) from the display, not sharing the display's SCLK/MOSI/MISO pins", "passed": true, "evidence": "'the XPT2046 touch controller sits on a completely separate bus (HSPI) with its own pin set.'"}, {"text": "Gives the corrected touch pin numbers: SCLK=25, MOSI=32, MISO=39, CS=33", "passed": true, "evidence": "Table and code both give SCLK=25, MOSI=32, MISO=39, CS=33."}, {"text": "Says bus_shared should be set to false for the touch config", "passed": true, "evidence": "`cfg.bus_shared = false;   // touch is NOT on the display's bus on this board`"}, {"text": "Mentions a concrete diagnostic signature (e.g. IRQ pin staying high, or raw touch values never changing) as confirmation of a wiring/pin problem", "passed": true, "evidence": "'If IRQ stays frozen at 1 and raw values never change even while tapping hard, you're still not actually talking to the chip.'"}], "notes": []}, {"eval_id": 2, "eval_name": "wrong-spi-bus", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.75, "passed": 3, "failed": 1, "total": 4, "time_seconds": 49.8, "tokens": 56021, "tool_calls": null, "errors": 0}, "expectations": [{"text": "States that touch (XPT2046) is on a separate SPI bus (HSPI) from the display, not sharing the display's SCLK/MOSI/MISO pins", "passed": true, "evidence": "'the XPT2046 touch chip sits on a completely separate set of GPIOs from the ILI9341 display'"}, {"text": "Gives the corrected touch pin numbers: SCLK=25, MOSI=32, MISO=39, CS=33", "passed": true, "evidence": "Table and code both give SCLK=25, MOSI=32, MISO=39, CS=33."}, {"text": "Says bus_shared should be set to false for the touch config", "passed": true, "evidence": "'touch has its own dedicated bus on 25/32/39 \u2014 so this should be false.'"}, {"text": "Mentions a concrete diagnostic signature (e.g. IRQ pin staying high, or raw touch values never changing) as confirmation of a wiring/pin problem", "passed": false, "evidence": "Only suggests a physical multimeter check that pin 36 pulls low on press; does not describe the frozen-IRQ/frozen-raw-value serial-log signature."}], "notes": []}, {"eval_id": 3, "eval_name": "axis-swap-calibration", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 36.4, "tokens": 62036, "tool_calls": null, "errors": 0}, "expectations": [{"text": "Recommends empirically measuring raw touch values (e.g. tapping the four corners) rather than only guessing rotation/offset values", "passed": true, "evidence": "'Don't try to fight this with LovyanGFX's offset_rotation enum by trial and error... read raw values with getTouchRaw()... tap the four corners.'"}, {"text": "Suggests logging raw touch x/y with a timestamp so individual taps can be distinguished", "passed": true, "evidence": "`Serial.printf(\"t=%lu RAW x=%d y=%d\\n\", millis(), rx, ry);`"}, {"text": "Provides example code using map()/constrain() (or equivalent linear mapping) to convert raw touch coordinates to screen coordinates", "passed": true, "evidence": "Full loop() example using constrain(map(...)) for sx/sy."}, {"text": "Does not present trial-and-error of the offset_rotation enum as the sole/primary fix", "passed": true, "evidence": "Explicitly argues against offset_rotation trial-and-error as unreliable and recommends the empirical map() approach instead."}], "notes": []}, {"eval_id": 3, "eval_name": "axis-swap-calibration", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.75, "passed": 3, "failed": 1, "total": 4, "time_seconds": 36.2, "tokens": 54952, "tool_calls": null, "errors": 0}, "expectations": [{"text": "Recommends empirically measuring raw touch values (e.g. tapping the four corners) rather than only guessing rotation/offset values", "passed": true, "evidence": "Option B: 'figure out empirically what transform you need \u2014 don't guess... Tap the physical top-left corner... then tap the physical bottom-right corner.'"}, {"text": "Suggests logging raw touch x/y with a timestamp so individual taps can be distinguished", "passed": false, "evidence": "Debug print is `Serial.printf(\"raw x=%d y=%d\\n\", p.x, p.y);` with no timestamp; taps are disambiguated only by the user manually noting values between prompts, not a timestamped log."}, {"text": "Provides example code using map()/constrain() (or equivalent linear mapping) to convert raw touch coordinates to screen coordinates", "passed": true, "evidence": "`getScreenTouch()` function uses `map()` and `constrain()`."}, {"text": "Does not present trial-and-error of the offset_rotation enum as the sole/primary fix", "passed": true, "evidence": "Never mentions offset_rotation at all; instead offers LovyanGFX's calibrateTouch() routine or manual corner-derived swap/invert constants."}], "notes": []}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 26.2, "stddev": 9.2081, "min": 18.5, "max": 36.4}, "tokens": {"mean": 59143.0, "stddev": 2506.0944, "min": 57638, "max": 62036}}, "without_skill": {"pass_rate": {"mean": 0.7667, "stddev": 0.0289, "min": 0.75, "max": 0.8}, "time_seconds": {"mean": 40.2333, "stddev": 8.3189, "min": 34.7, "max": 49.8}, "tokens": {"mean": 55100.6667, "stddev": 855.7408, "min": 54329, "max": 56021}}, "delta": {"pass_rate": "+0.23", "time_seconds": "-14.0", "tokens": "+4042"}}, "notes": ["With-skill responses passed every assertion across all 3 evals (13/13 = 100%); without-skill passed 10/13 (77%).", "On 'wrong-spi-bus', the baseline (no skill) already knew the correct touch pin numbers (25/32/39/33) from general training knowledge, since this board's pinout is well documented online -- the skill's main differentiator there wasn't the pin values themselves but the IRQ-frozen/raw-values-frozen diagnostic signature used to confirm a wiring problem before jumping to fixes, which the baseline lacked (it suggested a multimeter check instead).", "On 'axis-swap-calibration', the without-skill baseline offered a 'typical working transform' as a copy-pasteable code snippet even while also advising to measure empirically -- a real risk that a user copies the generic constants instead of deriving their own per-unit values, which is exactly the trap the skill's corner-tap procedure is designed to avoid. The baseline also didn't suggest timestamped raw-touch logging, which is what makes multi-corner taps distinguishable in a live serial stream.", "On 'cable-not-driver', the only assertion the baseline missed was explicitly noting that an LED lighting up only proves power, not a data connection -- a small but real gap, since a user could dismiss the cable-cable-cable of a lit-up board as normal.", "Time and token usage were NOT worse with the skill in this run -- with_skill mean time was actually lower (26.2s vs 40.2s) and token usage was comparable (~59k vs ~55k). Sample size is 1 run per configuration per eval, so treat this as directional, not conclusive."]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>
