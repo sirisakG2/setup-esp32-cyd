@@ -7,11 +7,75 @@ detection through display bring-up to touch bring-up and calibration.
 Board: ESP32-D0WD-V3, 240x320 ILI9341 SPI display, resistive XPT2046 touch,
 CH340C USB-UART bridge.
 
-See the [Issues](../../issues) tab for each individual problem, its root cause,
-and the fix.
-
 The working firmware this troubleshooting led to lives at
 [sirisakG2/esp32-cyd-macropad](https://github.com/sirisakG2/esp32-cyd-macropad).
+
+## The 3 problems
+
+Getting this board fully working (screen showing something, and touch
+responding accurately) took three separate rounds of troubleshooting. Each
+one is filed as a GitHub Issue with the full symptom → investigation →
+cause → fix writeup; here's the short, plain-language version of each.
+
+### [#1 — Board not detected on macOS](../../issues/1)
+**The problem:** Plugged the board into the Mac over USB, its little LED lit
+up (so it's clearly getting power), but the Mac never showed it as an
+available port at all — not in Arduino IDE, not even at the command line.
+
+**Why it happened:** The USB-C cable being used only had power wires inside
+it, not data wires. This is extremely common — a lot of cables that ship
+with gadgets (or that you'd use "just to charge something") are physically
+missing the wires needed to actually send information, even though they
+look identical to a cable that can. A lit-up LED only proves the board is
+receiving electricity; it proves nothing about whether data can flow.
+
+**The fix:** Swapped in a different cable (one already known to work for
+transferring files, not just charging), and the board immediately appeared.
+**Lesson for next time:** if a USB device won't show up *at all*, suspect
+the cable before anything else — before drivers, before software, before
+the board itself.
+
+### [#2 — Touch not responding](../../issues/2)
+**The problem:** The screen displayed things correctly (so the board and
+the display definitely worked), but tapping the touchscreen never did
+anything — the code just never noticed a touch had happened.
+
+**Why it happened:** This board actually has *two separate small chips*
+doing two separate jobs: one draws things on the screen, and a completely
+different one senses finger touches. Wiring code had accidentally been
+written as if both chips shared the same set of connections (which is true
+on some other similar boards), when in fact this specific board wires them
+to entirely separate sets of pins. The touch-sensing chip was effectively
+being asked questions over wires it was never actually connected to — so
+of course it never answered.
+
+**The fix:** Pointed the touch code at the correct, separate set of pins
+this board actually uses for its touch chip. Confirmed the fix by watching
+a live log while tapping the screen and seeing the numbers actually change
+in response — proof the two chips were finally talking.
+
+### [#3 — Touch coordinates flipped/rotated](../../issues/3)
+**The problem:** Progress! Now tapping the screen *did* register — but the
+dot that was supposed to appear right under your finger showed up somewhere
+else entirely (off to the side, or upside down from where you actually
+touched).
+
+**Why it happened:** The touch-sensing chip reports raw numbers in
+whatever orientation it happens to be physically glued down in — it has no
+idea the screen itself is displaying things sideways or upside-down
+relative to that. On this particular board (and this can vary from unit to
+unit), the touch chip's sense of "left/right" and "up/down" was completely
+swapped and reversed compared to the screen's. Guessing at a handful of
+preset "try this rotation" options one at a time never quite lined up.
+
+**The fix:** Instead of guessing, the actual relationship was measured
+directly — by tapping each of the four corners of the screen one at a time
+while logging exactly what raw numbers the touch chip reported for each
+corner, then working out the pattern from real data. That pattern was then
+hardcoded into the code as a small conversion formula. **Lesson for next
+time:** when something reports coordinates that don't match reality, measure
+the real relationship from a few known points rather than guessing at
+built-in rotation settings.
 
 ## Claude "Skill" test reports
 
