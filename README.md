@@ -10,6 +10,29 @@ CH340C USB-UART bridge.
 The working firmware this troubleshooting led to lives at
 [sirisakG2/esp32-cyd-macropad](https://github.com/sirisakG2/esp32-cyd-macropad).
 
+## Board spec sheet + live test
+
+### 🔌 [Open the spec sheet and live test](https://sirisakg2.github.io/setup-esp32-cyd/cyd-spec.html)
+
+One web page with everything about this board: the full specs, a map of
+what every pin (GPIO) is connected to, and links to useful guides.
+
+**The live test** checks your board through the USB cable, right in the
+browser:
+1. Plug the board into the computer.
+2. Open the page in **Chrome, Edge or Opera** (Safari and Firefox can't do
+   this part).
+3. Press **Connect board** and choose the port with `usbserial` in its name.
+4. The checklist fills in by itself: it shows whether the computer can see
+   the board (which proves the cable carries data), which USB chip the
+   board uses, and, after you press **Reset board**, whether the ESP32
+   answers with its start-up message.
+
+This is also a quick way to test several cables: a cable that only charges
+never produces a port in the list. Specs are labelled **verified** (checked
+on this exact board), **check** (probably true, confirm with the live
+test) or **docs** (from public documentation, can differ between batches).
+
 ## The 3 problems
 
 Getting this board fully working (screen showing something, and touch

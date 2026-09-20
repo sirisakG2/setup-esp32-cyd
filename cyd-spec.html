@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>ESP32-2432S028R CYD Spec Sheet</title>
+<style>
+  :root {
+    --bg: #faf9f5;
+    --surface: #ffffff;
+    --surface2: #f3f1ea;
+    --border: #e2dfd3;
+    --text: #1d1c19;
+    --muted: #6b6960;
+    --accent: #c98a00;
+    --accent-soft: #fbf0d2;
+    --ok: #1a7f4b;   --ok-bg: #dff3e7;
+    --bad: #b3261e;  --bad-bg: #fbe4e2;
+    --warn: #8a5b00; --warn-bg: #fdeeca;
+    --pend: #6b6960; --pend-bg: #ecebe4;
+    --log-bg: #15140f; --log-text: #e8e6da; --log-dim: #8b8878;
+    --c-display: #2f6fdb; --c-touch: #8a48d6; --c-sd: #0e8f86; --c-led: #d6336c;
+    --c-sensor: #b5761a; --c-audio: #c2521f; --c-button: #55534a; --c-serial: #3b7f2a;
+    --c-free: #1a7f4b;   --c-flash: #9a978a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14130f; --surface: #1d1c17; --surface2: #26251f; --border: #38362d;
+      --text: #ecebe3; --muted: #a09d90; --accent: #e8b23a; --accent-soft: #3a3016;
+      --ok: #5fd08d; --ok-bg: #16301f; --bad: #ff8a80; --bad-bg: #3a1a17;
+      --warn: #f0c060; --warn-bg: #3a2e12; --pend: #a09d90; --pend-bg: #2a2923;
+      --log-bg: #0c0b08;
+      --c-display: #6ea0ff; --c-touch: #c39bff; --c-sd: #4fd1c5; --c-led: #ff7aa8;
+      --c-sensor: #e8b23a; --c-audio: #ff9a66; --c-button: #b9b7ab; --c-serial: #8fd06e;
+      --c-free: #5fd08d; --c-flash: #77746a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14130f; --surface: #1d1c17; --surface2: #26251f; --border: #38362d;
+    --text: #ecebe3; --muted: #a09d90; --accent: #e8b23a; --accent-soft: #3a3016;
+    --ok: #5fd08d; --ok-bg: #16301f; --bad: #ff8a80; --bad-bg: #3a1a17;
+    --warn: #f0c060; --warn-bg: #3a2e12; --pend: #a09d90; --pend-bg: #2a2923;
+    --log-bg: #0c0b08;
+    --c-display: #6ea0ff; --c-touch: #c39bff; --c-sd: #4fd1c5; --c-led: #ff7aa8;
+    --c-sensor: #e8b23a; --c-audio: #ff9a66; --c-button: #b9b7ab; --c-serial: #8fd06e;
+    --c-free: #5fd08d; --c-flash: #77746a;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  a:hover { text-decoration-thickness: 2px; }
+  code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  code { background: var(--surface2); padding: 1px 5px; border-radius: 4px; font-size: .88em; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+
+  header.hero { border-bottom: 4px solid var(--accent); background: var(--surface); }
+  header.hero .wrap { padding-top: 28px; padding-bottom: 22px; }
+  .eyebrow { color: var(--accent); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; }
+  h1 { margin: 4px 0 6px; font-size: 30px; line-height: 1.2; }
+  .sub { color: var(--muted); max-width: 680px; margin: 0 0 14px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { background: var(--accent-soft); color: var(--text); border: 1px solid var(--border);
+          padding: 3px 10px; border-radius: 999px; font-size: 13px; }
+
+  nav.toc { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--border); }
+  nav.toc .wrap { display: flex; gap: 4px; overflow-x: auto; padding-top: 8px; padding-bottom: 8px; }
+  nav.toc a { color: var(--text); text-decoration: none; padding: 5px 12px; border-radius: 8px; white-space: nowrap; font-size: 14px; }
+  nav.toc a:hover { background: var(--surface2); }
+
+  section { padding: 30px 0 6px; scroll-margin-top: 52px; }
+  h2 { font-size: 22px; margin: 0 0 4px; }
+  .lead { color: var(--muted); margin: 0 0 16px; max-width: 720px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+
+  /* live test */
+  .live { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 16px; align-items: start; }
+  .live > * { min-width: 0; }
+  @media (max-width: 820px) { .live { grid-template-columns: minmax(0, 1fr); } }
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .step { display: grid; grid-template-columns: 26px 1fr; gap: 10px; padding: 8px 10px; border-radius: 8px; background: var(--surface2); }
+  .step .ico { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 13px; background: var(--pend-bg); color: var(--pend); }
+  .step[data-s="ok"] .ico { background: var(--ok-bg); color: var(--ok); }
+  .step[data-s="bad"] .ico { background: var(--bad-bg); color: var(--bad); }
+  .step[data-s="warn"] .ico { background: var(--warn-bg); color: var(--warn); }
+  .step b { display: block; font-size: 14px; }
+  .step span.d { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+  button, select, input[type="text"] {
+    font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 12px;
+  }
+  button { cursor: pointer; font-weight: 600; }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.primary { background: var(--accent); color: #1d1c19; border-color: var(--accent); }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+  @media (max-width: 560px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat { background: var(--surface2); border-radius: 8px; padding: 8px 10px; }
+  .stat .k { color: var(--muted); font-size: 12px; }
+  .stat .v { font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
+  .spark { display: flex; align-items: flex-end; gap: 2px; height: 34px; margin: 0 0 10px; padding: 3px; background: var(--surface2); border-radius: 8px; }
+  .spark i { flex: 1; min-height: 1px; background: var(--accent); border-radius: 1px; opacity: .85; }
+  #log { background: var(--log-bg); color: var(--log-text); border-radius: 8px; padding: 10px 12px; height: 250px; overflow: auto;
+         font-size: 12.5px; line-height: 1.5; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  #log .rom { color: var(--log-dim); }
+  #log .ts { color: var(--log-dim); margin-right: 8px; }
+  #log .sys { color: var(--accent); }
+  .sendrow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .sendrow input { flex: 1 1 200px; min-width: 0; }
+  .banner { padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 14px; }
+  .banner.bad { background: var(--bad-bg); color: var(--bad); }
+  .banner.warn { background: var(--warn-bg); color: var(--warn); }
+  .hint { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+
+  /* tables */
+  .tbl { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .tbl th, .tbl td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .tbl tr:last-child th, .tbl tr:last-child td { border-bottom: none; }
+  .tbl th { width: 30%; font-weight: 600; background: var(--surface2); }
+  @media (max-width: 560px) { .tbl th { width: 38%; } }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+  .tag.v { background: var(--ok-bg); color: var(--ok); }
+  .tag.d { background: var(--pend-bg); color: var(--pend); }
+  .tag.c { background: var(--warn-bg); color: var(--warn); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 820px) { .grid2 { grid-template-columns: 1fr; } }
+  h3 { font-size: 16px; margin: 0 0 8px; }
+
+  /* pin map */
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; background: var(--c); vertical-align: -1px; }
+  .pins { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+  .pin { display: grid; grid-template-columns: 46px 1fr; gap: 8px; background: var(--surface); border: 1px solid var(--border);
+         border-left: 5px solid var(--c); border-radius: 8px; padding: 7px 10px; }
+  .pin .n { font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums; }
+  .pin .f { font-size: 13px; line-height: 1.35; }
+  .pin .f small { color: var(--muted); display: block; }
+  .pin.unv { border-style: dashed; border-left-style: solid; }
+
+  ul.links { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
+  ul.links li { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  ul.links a { font-weight: 700; }
+  ul.links p { margin: 3px 0 0; color: var(--muted); font-size: 13.5px; }
+  .callout { background: var(--accent-soft); border: 1px solid var(--border); border-left: 5px solid var(--accent); border-radius: 8px; padding: 12px 16px; }
+  .callout p { margin: 0 0 6px; } .callout p:last-child { margin: 0; }
+  footer { color: var(--muted); font-size: 13px; padding: 30px 0 50px; }
+  .themebtn { float: right; font-size: 13px; padding: 4px 10px; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <button class="themebtn" id="themeBtn" type="button" aria-label="Toggle dark or light theme">Theme</button>
+    <div class="eyebrow">Cheap Yellow Display</div>
+    <h1>ESP32-2432S028R spec sheet + live test</h1>
+    <p class="sub">Everything about this board in one page: specs, which GPIO does what, useful links, and a live test that talks to your board through the USB cable.</p>
+    <div class="chips">
+      <span class="chip">ESP32 dual-core 240 MHz</span>
+      <span class="chip">2.8&Prime; 240&times;320 ILI9341</span>
+      <span class="chip">Resistive touch XPT2046</span>
+      <span class="chip">WiFi + Bluetooth</span>
+      <span class="chip">microSD</span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Sections">
+  <div class="wrap">
+    <a href="#live">Live test</a>
+    <a href="#spec">Specs</a>
+    <a href="#pins">GPIO map</a>
+    <a href="#gotchas">Gotchas</a>
+    <a href="#links">Links</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ============ LIVE TEST ============ -->
+<section id="live">
+  <h2>Live test</h2>
+  <p class="lead">Plug the board in, press <b>Connect board</b>, and pick the port named <code>usbserial</code> in the popup. The checks below fill in by themselves. Works in <b>Chrome, Edge or Opera</b> (Safari and Firefox don't support this).</p>
+
+  <div id="unsupported" class="banner bad" hidden>
+    This browser can't talk to USB serial ports (no Web Serial support). Open this same file in Chrome, Edge or Opera. Everything else on the page still works.
+  </div>
+  <div id="unplugged" class="banner warn" hidden>
+    The board was unplugged (or the cable lost its data connection). Plug it back in and press Connect board again.
+  </div>
+
+  <div class="live">
+    <div class="card">
+      <h3>Checks</h3>
+      <ol class="steps" id="steps">
+        <li class="step" data-id="browser" data-s="pend"><span class="ico">1</span><div><b>Browser supports Web Serial</b><span class="d">Checking&hellip;</span></div></li>
+        <li class="step" data-id="port" data-s="pend"><span class="ico">2</span><div><b>Mac can see the board</b><span class="d">Waiting for you to press Connect. A port only appears with a data cable.</span></div></li>
+        <li class="step" data-id="usb" data-s="pend"><span class="ico">3</span><div><b>USB chip identified</b><span class="d">Reads the vendor and product ID from the cable side.</span></div></li>
+        <li class="step" data-id="open" data-s="pend"><span class="ico">4</span><div><b>Port opens</b><span class="d">Not opened yet.</span></div></li>
+        <li class="step" data-id="alive" data-s="pend"><span class="ico">5</span><div><b>ESP32 answers</b><span class="d">Press Reset board. A healthy ESP32 prints its boot message.</span></div></li>
+        <li class="step" data-id="fw" data-s="pend"><span class="ico">6</span><div><b>Your firmware prints text</b><span class="d">Optional. Only shows if the uploaded program uses Serial.print.</span></div></li>
+      </ol>
+      <p class="hint">Note: your current macro pad firmware prints nothing over serial, so step 6 stays gray for it. That's normal.</p>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <button class="primary" id="connectBtn" type="button">Connect board</button>
+        <button id="resetBtn" type="button" disabled>Reset board</button>
+        <button id="disconnectBtn" type="button" disabled>Disconnect</button>
+        <label>Baud <select id="baud" aria-label="Baud rate">
+          <option>115200</option><option>9600</option><option>57600</option><option>230400</option><option>460800</option><option>921600</option>
+        </select></label>
+      </div>
+
+      <div class="stats" aria-live="polite">
+        <div class="stat"><div class="k">Status</div><div class="v" id="stStatus">Not connected</div></div>
+        <div class="stat"><div class="k">Bytes received</div><div class="v" id="stBytes">0</div></div>
+        <div class="stat"><div class="k">Bytes / second</div><div class="v" id="stRate">0</div></div>
+        <div class="stat"><div class="k">Connected for</div><div class="v" id="stTime">&ndash;</div></div>
+      </div>
+      <div class="spark" id="spark" aria-hidden="true" title="Bytes per second, last 40 seconds"></div>
+
+      <pre id="log" tabindex="0" aria-label="Serial output from the board"><span class="sys">Waiting for connection&hellip;</span></pre>
+      <div class="sendrow">
+        <input type="text" id="sendBox" placeholder="Type text to send to the board, then press Enter" autocomplete="off" disabled aria-label="Text to send">
+        <button id="sendBtn" type="button" disabled>Send</button>
+        <button id="clearBtn" type="button">Clear</button>
+        <button id="copyBtn" type="button">Copy log</button>
+      </div>
+      <p class="hint">Opening the port can restart the board (that is normal for ESP32). The 40&nbsp;MHz crystal, chip type and MAC address are printed by <code>esptool</code> when you upload, not here.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SPEC ============ -->
+<section id="spec">
+  <h2>Specifications</h2>
+  <p class="lead">
+    <span class="tag v">verified</span> = confirmed on this exact board during setup.
+    <span class="tag c">check</span> = probably true, confirm with the live test or esptool.
+    <span class="tag d">docs</span> = from public documentation, varies by batch.
+  </p>
+
+  <div class="grid2">
+    <div>
+      <h3>Processor and radio</h3>
+      <table class="tbl">
+        <tr><th>Chip</th><td>ESP32-D0WD-V3, revision v3.1 <span class="tag v">verified</span></td></tr>
+        <tr><th>CPU</th><td>Dual-core Xtensa LX6, up to 240&nbsp;MHz <span class="tag v">verified</span></td></tr>
+        <tr><th>Crystal</th><td>40&nbsp;MHz <span class="tag v">verified</span></td></tr>
+        <tr><th>RAM</th><td>520&nbsp;KB SRAM, usually no PSRAM <span class="tag d">docs</span></td></tr>
+        <tr><th>Flash</th><td>4&nbsp;MB typical <span class="tag c">check</span></td></tr>
+        <tr><th>WiFi</th><td>802.11 b/g/n, 2.4&nbsp;GHz only <span class="tag v">verified</span></td></tr>
+        <tr><th>Bluetooth</th><td>Classic + BLE 4.2. BLE keyboard works <span class="tag v">verified</span></td></tr>
+        <tr><th>MAC address</th><td class="mono">20:50:0d:1a:ba:a0 <span class="tag v">verified</span></td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Display and touch</h3>
+      <table class="tbl">
+        <tr><th>Screen</th><td>2.8&Prime; TFT, 240&times;320, 65K colors <span class="tag d">docs</span></td></tr>
+        <tr><th>Driver</th><td>ILI9341 over SPI <span class="tag v">verified</span></td></tr>
+        <tr><th>Backlight</th><td>GPIO 21, PWM dimmable <span class="tag v">verified</span></td></tr>
+        <tr><th>Touch</th><td>XPT2046 resistive, needs a firm press <span class="tag v">verified</span></td></tr>
+        <tr><th>Touch bus</th><td>Separate HSPI bus, not shared with the display <span class="tag v">verified</span></td></tr>
+        <tr><th>Touch axes</th><td>Swapped and inverted on this unit, calibrated with 4 corner taps <span class="tag v">verified</span></td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>USB and power</h3>
+      <table class="tbl">
+        <tr><th>USB-serial chip</th><td>CH340C usually (some batches CP2102). The live test reads the real ID. <span class="tag c">check</span></td></tr>
+        <tr><th>Port on Mac</th><td class="mono">/dev/cu.usbserial-110 <span class="tag v">verified</span></td></tr>
+        <tr><th>Connector</th><td>Micro-USB and/or USB-C depending on revision <span class="tag d">docs</span></td></tr>
+        <tr><th>Power</th><td>5&nbsp;V from USB, onboard 3.3&nbsp;V regulator <span class="tag d">docs</span></td></tr>
+        <tr><th>Native USB</th><td>None. It cannot act as a USB keyboard, so the macro pad uses Bluetooth.</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Built-in extras</h3>
+      <table class="tbl">
+        <tr><th>microSD slot</th><td>SPI: CS 5, SCK 18, MISO 19, MOSI 23 <span class="tag d">docs</span></td></tr>
+        <tr><th>RGB LED</th><td>R 4, G 16, B 17. Active-low: LOW = on <span class="tag d">docs</span></td></tr>
+        <tr><th>Light sensor</th><td>LDR on GPIO 34 (analog) <span class="tag d">docs</span></td></tr>
+        <tr><th>Speaker</th><td>GPIO 26 DAC, amplifier, 2-pin connector <span class="tag d">docs</span></td></tr>
+        <tr><th>Buttons</th><td>BOOT (GPIO 0) and RESET (EN)</td></tr>
+        <tr><th>Size</th><td>About 50 &times; 86&nbsp;mm <span class="tag d">docs</span></td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PINS ============ -->
+<section id="pins">
+  <h2>GPIO map</h2>
+  <p class="lead">Every usable pin and what it is wired to. Solid border = verified on this unit, dashed = from public docs. Pins 6&ndash;11 are the internal flash and must never be used.</p>
+  <div class="legend" id="legend"></div>
+  <div class="pins" id="pinGrid"></div>
+</section>
+
+<!-- ============ GOTCHAS ============ -->
+<section id="gotchas">
+  <h2>Gotchas we already hit</h2>
+  <p class="lead">Real problems from this board's setup, each written up as a GitHub issue.</p>
+  <div class="callout">
+    <p><b>Board not detected:</b> a charge-only cable lights the LED but has no data wires. Swap the cable first. <a href="https://github.com/sirisakG2/setup-esp32-cyd/issues/1">Issue #1</a></p>
+    <p><b>Touch never responds:</b> touch uses its own pins (25, 32, 39, 33, 36), not the display's. <a href="https://github.com/sirisakG2/setup-esp32-cyd/issues/2">Issue #2</a></p>
+    <p><b>Touch lands in the wrong place:</b> measure the four corners and map them yourself instead of guessing rotations. <a href="https://github.com/sirisakG2/setup-esp32-cyd/issues/3">Issue #3</a></p>
+    <p><b>Flash is nearly full with Bluetooth:</b> the BLE keyboard plus graphics filled 94% of the default partition, so the project uses <code>huge_app.csv</code>.</p>
+  </div>
+</section>
+
+<!-- ============ LINKS ============ -->
+<section id="links">
+  <h2>Useful links</h2>
+  <p class="lead">All checked and working when this page was made.</p>
+  <ul class="links">
+    <li><a href="https://github.com/witnessmenow/ESP32-Cheap-Yellow-Display">ESP32-Cheap-Yellow-Display (community hub)</a><p>The main community repo: pinouts, hardware notes, examples.</p></li>
+    <li><a href="https://randomnerdtutorials.com/cheap-yellow-display-esp32-2432s028r/">Random Nerd Tutorials: CYD guide</a><p>Beginner-friendly walkthrough with example code.</p></li>
+    <li><a href="https://github.com/rzeldent/esp32-smartdisplay">esp32-smartdisplay</a><p>Ready-made board support for many cheap ESP32 displays.</p></li>
+    <li><a href="https://github.com/lovyan03/LovyanGFX">LovyanGFX</a><p>The graphics and touch library used in this project.</p></li>
+    <li><a href="https://github.com/T-vK/ESP32-BLE-Keyboard">ESP32-BLE-Keyboard</a><p>Bluetooth keyboard library behind the macro pad.</p></li>
+    <li><a href="https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf">ESP32 datasheet (PDF)</a><p>Official chip datasheet from Espressif.</p></li>
+    <li><a href="https://docs.platformio.org/en/latest/boards/espressif32/esp32dev.html">PlatformIO esp32dev board</a><p>The board profile this project builds with.</p></li>
+    <li><a href="https://www.wch-ic.com/products/CH340.html">WCH CH340 page</a><p>Maker of the USB-serial chip, driver downloads.</p></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API">Web Serial API (MDN)</a><p>How the live test above talks to the board.</p></li>
+    <li><a href="https://github.com/sirisakG2/esp32-cyd-macropad">esp32-cyd-macropad</a><p>Your working Bluetooth macro pad firmware.</p></li>
+    <li><a href="https://github.com/sirisakG2/setup-esp32-cyd">setup-esp32-cyd</a><p>Your troubleshooting log with the three issues.</p></li>
+  </ul>
+</section>
+
+<footer>Made for the ESP32-2432S028R. Specs marked &ldquo;docs&rdquo; come from public documentation and can differ between board batches.</footer>
+</main>
+
+<script>
+(() => {
+  // ---------- theme toggle ----------
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('themeBtn');
+  try { const t = localStorage.getItem('cyd-theme'); if (t) root.dataset.theme = t; } catch (e) {}
+  themeBtn.addEventListener('click', () => {
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('cyd-theme', root.dataset.theme); } catch (e) {}
+  });
+
+  // ---------- GPIO map ----------
+  const CATS = {
+    display: 'Display', touch: 'Touch', sd: 'microSD', led: 'RGB LED', sensor: 'Light sensor',
+    audio: 'Speaker', button: 'Button', serial: 'Serial header', free: 'Free', flash: 'Internal flash'
+  };
+  const PINS = [
+    [0, 'BOOT button', 'button', 'Hold LOW at reset to enter flash mode', 0],
+    [1, 'TX0', 'serial', 'Serial header, used by USB chip', 0],
+    [2, 'TFT DC', 'display', 'Display data/command', 1],
+    [3, 'RX0', 'serial', 'Serial header, used by USB chip', 0],
+    [4, 'LED red', 'led', 'Active-low', 0],
+    [5, 'SD CS', 'sd', 'microSD chip select', 0],
+    [12, 'TFT MISO', 'display', 'Boot-strapping pin', 1],
+    [13, 'TFT MOSI', 'display', '', 1],
+    [14, 'TFT SCLK', 'display', '', 1],
+    [15, 'TFT CS', 'display', '', 1],
+    [16, 'LED green', 'led', 'Active-low', 0],
+    [17, 'LED blue', 'led', 'Active-low', 0],
+    [18, 'SD SCK', 'sd', 'microSD clock', 0],
+    [19, 'SD MISO', 'sd', '', 0],
+    [21, 'TFT backlight', 'display', 'PWM, also on the P3 header', 1],
+    [22, 'Free', 'free', 'On P3 and CN1 headers', 0],
+    [23, 'SD MOSI', 'sd', '', 0],
+    [25, 'Touch CLK', 'touch', '', 1],
+    [26, 'Speaker DAC', 'audio', 'To amplifier', 0],
+    [27, 'Free', 'free', 'On CN1 header', 0],
+    [32, 'Touch MOSI', 'touch', '', 1],
+    [33, 'Touch CS', 'touch', '', 1],
+    [34, 'Light sensor (LDR)', 'sensor', 'Input only, analog', 0],
+    [35, 'Free (input only)', 'free', 'On P3 header', 0],
+    [36, 'Touch IRQ', 'touch', 'Input only', 1],
+    [39, 'Touch MISO', 'touch', 'Input only', 1],
+    ['6-11', 'Internal flash', 'flash', 'Do not use', 0]
+  ];
+  const legend = document.getElementById('legend');
+  Object.entries(CATS).forEach(([k, label]) => {
+    const s = document.createElement('span'); s.style.setProperty('--c', `var(--c-${k})`); s.textContent = label; legend.appendChild(s);
+  });
+  const grid = document.getElementById('pinGrid');
+  PINS.forEach(([n, fn, cat, note, ver]) => {
+    const d = document.createElement('div');
+    d.className = 'pin' + (ver ? '' : ' unv');
+    d.style.setProperty('--c', `var(--c-${cat})`);
+    const num = document.createElement('div'); num.className = 'n'; num.textContent = n;
+    const f = document.createElement('div'); f.className = 'f'; f.textContent = fn;
+    if (note) { const s = document.createElement('small'); s.textContent = note; f.appendChild(s); }
+    d.append(num, f); grid.appendChild(d);
+  });
+
+  // ---------- live test ----------
+  const $ = id => document.getElementById(id);
+  const stepEl = id => document.querySelector(`.step[data-id="${id}"]`);
+  function setStep(id, state, text) {
+    const el = stepEl(id);
+    el.dataset.s = state;
+    el.querySelector('.ico').textContent = state === 'ok' ? '✓' : state === 'bad' ? '✗' : state === 'warn' ? '!' : el.querySelector('.ico').textContent;
+    if (text) el.querySelector('.d').textContent = text;
+  }
+
+  const USB_IDS = {
+    '1a86:7523': 'WCH CH340 (the usual chip on this board)',
+    '1a86:55d4': 'WCH CH9102',
+    '1a86:5523': 'WCH CH341',
+    '10c4:ea60': 'Silicon Labs CP2102 (alternative chip on some batches)',
+    '0403:6001': 'FTDI FT232',
+    '303a:1001': 'Espressif built-in USB (not the CYD)'
+  };
+
+  let port = null, reader = null, keepReading = false, connectedAt = 0;
+  let bytesTotal = 0, bytesThisSec = 0, romSeen = false, fwSeen = false;
+  const rate = new Array(40).fill(0);
+  let timer = null, partial = '', flushTimer = null, lineCount = 0;
+  const log = $('log');
+
+  function fmtTime(ms) { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+  function stamp() { const d = new Date(); return d.toTimeString().slice(0, 8); }
+
+  function addLine(text, cls) {
+    if (log.firstElementChild && log.firstElementChild.classList.contains('sys') && log.childNodes.length === 1 && log.textContent.startsWith('Waiting')) log.textContent = '';
+    const row = document.createElement('div');
+    if (cls) row.className = cls;
+    const ts = document.createElement('span'); ts.className = 'ts'; ts.textContent = stamp();
+    row.append(ts, document.createTextNode(text));
+    log.appendChild(row);
+    while (log.childNodes.length > 500) log.removeChild(log.firstChild);
+    log.scrollTop = log.scrollHeight;
+    lineCount++;
+  }
+
+  const ROM_RE = /^(ets \w+ \d+ \d+|rst:0x|configsip:|clk_drv:|mode:|load:|entry 0x|ESP-ROM:|Build:|SPIWP:|boot:|Saved PC:|ets_main)/;
+  function onLine(line) {
+    if (!line.trim()) return;
+    if (ROM_RE.test(line)) {
+      const m = line.match(/rst:0x[0-9a-fA-F]+\s*\(([^)]*)\)/);
+      if (!romSeen || m) { romSeen = true; setStep('alive', 'ok', 'Boot message received' + (m ? ' (reset reason: ' + m[1] + ')' : '') + '. The ESP32 is alive.'); }
+      addLine(line, 'rom');
+    } else {
+      if (!fwSeen) { fwSeen = true; setStep('fw', 'ok', 'Firmware output detected, e.g. "' + line.slice(0, 60) + '"'); }
+      addLine(line);
+    }
+  }
+  function onBytes(value) {
+    bytesTotal += value.length; bytesThisSec += value.length;
+    $('stBytes').textContent = bytesTotal.toLocaleString();
+    // Garbage at the wrong baud rate shows up as many replacement characters.
+  }
+
+  function tick() {
+    rate.push(bytesThisSec); rate.shift();
+    $('stRate').textContent = bytesThisSec.toLocaleString();
+    bytesThisSec = 0;
+    $('stTime').textContent = connectedAt ? fmtTime(Date.now() - connectedAt) : '–';
+    const max = Math.max(1, ...rate);
+    const spark = $('spark');
+    Array.from(spark.children).forEach((el, i) => { el.style.height = Math.max(1, (rate[i] / max) * 100) + '%'; });
+  }
+  const spark = $('spark');
+  for (let i = 0; i < rate.length; i++) spark.appendChild(document.createElement('i'));
+
+  function setConnectedUI(on) {
+    $('connectBtn').disabled = on;
+    $('resetBtn').disabled = !on;
+    $('disconnectBtn').disabled = !on;
+    $('sendBox').disabled = !on;
+    $('sendBtn').disabled = !on;
+    $('baud').disabled = on;
+    $('stStatus').textContent = on ? 'Connected' : 'Not connected';
+  }
+
+  async function readLoop() {
+    const dec = new TextDecoder();
+    while (port && port.readable && keepReading) {
+      reader = port.readable.getReader();
+      try {
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          if (!value) continue;
+          onBytes(value);
+          partial += dec.decode(value, { stream: true });
+          const parts = partial.split(/\r?\n/);
+          partial = parts.pop();
+          parts.forEach(onLine);
+          clearTimeout(flushTimer);
+          flushTimer = setTimeout(() => { if (partial) { onLine(partial); partial = ''; } }, 350);
+        }
+      } catch (e) {
+        if (keepReading) addLine('Read error: ' + e.message, 'sys');
+      } finally {
+        reader.releaseLock(); reader = null;
+      }
+    }
+  }
+
+  async function connect() {
+    $('unplugged').hidden = true;
+    try {
+      port = await navigator.serial.requestPort();
+    } catch (e) {
+      setStep('port', 'warn', 'No port chosen. If the list was empty, the Mac sees no data connection: try another cable.');
+      return;
+    }
+    setStep('port', 'ok', 'Port selected, so the Mac sees a real data connection.');
+    const info = port.getInfo ? port.getInfo() : {};
+    if (info.usbVendorId !== undefined) {
+      const id = info.usbVendorId.toString(16).padStart(4, '0') + ':' + (info.usbProductId || 0).toString(16).padStart(4, '0');
+      const name = USB_IDS[id];
+      setStep('usb', name ? 'ok' : 'warn', 'ID ' + id.toUpperCase() + ' — ' + (name || 'unknown chip, still fine if the next steps pass'));
+    } else {
+      setStep('usb', 'warn', 'This port is not a USB device (e.g. a Bluetooth port). Pick the usbserial one.');
+    }
+    try {
+      await port.open({ baudRate: parseInt($('baud').value, 10) });
+    } catch (e) {
+      setStep('open', 'bad', 'Could not open: ' + e.message + '. Close other programs using the port (Arduino serial monitor, PlatformIO monitor, screen).');
+      port = null; return;
+    }
+    setStep('open', 'ok', 'Opened at ' + $('baud').value + ' baud.');
+    bytesTotal = 0; bytesThisSec = 0; romSeen = false; fwSeen = false; partial = ''; lineCount = 0;
+    $('stBytes').textContent = '0';
+    setStep('alive', 'pend', 'Press Reset board. A healthy ESP32 prints its boot message.');
+    setStep('fw', 'pend', 'Optional. Only shows if the uploaded program uses Serial.print.');
+    connectedAt = Date.now(); keepReading = true;
+    setConnectedUI(true);
+    addLine('Connected. Press Reset board to see the ESP32 boot message.', 'sys');
+    readLoop();
+  }
+
+  async function disconnect(silent) {
+    keepReading = false; clearTimeout(flushTimer);
+    try { if (reader) await reader.cancel(); } catch (e) {}
+    try { if (port) await port.close(); } catch (e) {}
+    port = null; connectedAt = 0;
+    setConnectedUI(false);
+    if (!silent) addLine('Disconnected.', 'sys');
+  }
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  async function resetBoard() {
+    if (!port) return;
+    try {
+      romSeen = false;
+      setStep('alive', 'pend', 'Resetting… waiting for the boot message.');
+      addLine('Resetting board (toggling RTS)…', 'sys');
+      await port.setSignals({ dataTerminalReady: false, requestToSend: true });
+      await sleep(120);
+      await port.setSignals({ dataTerminalReady: false, requestToSend: false });
+      setTimeout(() => {
+        if (port && !romSeen) setStep('alive', 'warn', 'No boot message yet. Try the other baud rate, or press the RESET button on the board.');
+      }, 3000);
+    } catch (e) { addLine('Reset failed: ' + e.message, 'sys'); }
+  }
+
+  async function sendText() {
+    const box = $('sendBox');
+    if (!port || !port.writable || !box.value) return;
+    const w = port.writable.getWriter();
+    try { await w.write(new TextEncoder().encode(box.value + '\n')); addLine('> ' + box.value, 'sys'); box.value = ''; }
+    catch (e) { addLine('Send failed: ' + e.message, 'sys'); }
+    finally { w.releaseLock(); }
+  }
+
+  // wire up
+  const supported = 'serial' in navigator;
+  if (!supported) {
+    $('unsupported').hidden = false;
+    setStep('browser', 'bad', 'Not supported in this browser. Use Chrome, Edge or Opera.');
+    $('connectBtn').disabled = true;
+  } else {
+    setStep('browser', 'ok', 'Supported.');
+    navigator.serial.addEventListener('disconnect', ev => {
+      if (ev.target === port) {
+        $('unplugged').hidden = false;
+        addLine('Board unplugged!', 'sys');
+        setStep('port', 'bad', 'The connection was lost (unplugged or cable has no data).');
+        disconnect(true);
+      }
+    });
+  }
+  $('connectBtn').addEventListener('click', connect);
+  $('resetBtn').addEventListener('click', resetBoard);
+  $('disconnectBtn').addEventListener('click', () => disconnect());
+  $('sendBtn').addEventListener('click', sendText);
+  $('sendBox').addEventListener('keydown', e => { if (e.key === 'Enter') sendText(); });
+  $('clearBtn').addEventListener('click', () => { log.textContent = ''; });
+  $('copyBtn').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(log.innerText); $('copyBtn').textContent = 'Copied'; setTimeout(() => $('copyBtn').textContent = 'Copy log', 1200); } catch (e) {}
+  });
+  timer = setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>
